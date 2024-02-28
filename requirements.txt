@@ -1,0 +1,5 @@
+TTS
+coqui_stt_model_manager
+spacy
+
+
