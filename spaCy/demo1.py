@@ -1,26 +1,7 @@
 import spacy
 
-# 加载中文模型
-nlp = spacy.load("zh_core_web_sm")
-
-# 示例文本
-with open("spaCy/demo1.txt", "r", encoding="utf-8") as f:
-    text = f.read()
-# 清理换行符
-text = text.replace("\n", " ").strip()
-
-# 使用spaCy进行处理
-doc = nlp(text)
-# 提取句子
-sentences = [sent for sent in doc.sents]
-
-# for i, sent in enumerate(sentences):
-#     print(f">>>> {i}: {sent.text}")
-
-# print("------------------")
-
 # 句子打断，有些说话旁白和说话内容在同一句话中，需要打断成旁白和说话内容两句话
-def break_sentences(sentences, speech_verbs):
+def break_sentences(nlp,sentences, speech_verbs):
     broken_sentences = []
 
     for sent in sentences:
@@ -66,16 +47,8 @@ def break_sentences(sentences, speech_verbs):
 
     return broken_sentences
 
-# 创建词汇表
-speechVerbs = ["说", "道", "便道", "告诉", "问", "回答"]
-
-sentencesBroken = break_sentences(sentences, speechVerbs)
-# for i, sent in enumerate(sentencesBroken):
-#     print(f">>>> {i}: {sent}")
-
-
 # 句子合并，有些说话内容是多句话，所以将多句话合并成一句话，用引号来判断
-def merge_sentences(sentences, max_merge_count=3):
+def merge_sentences(nlp,sentences, max_merge_count=3):
     sentences_merged = []
     i = 0
 
@@ -114,32 +87,57 @@ def merge_sentences(sentences, max_merge_count=3):
     
     return sentences_merged
 
-
-
-sentencesMerged = merge_sentences(sentencesBroken, 5)
-
-# 输出合并后的句子
-for i, sent in enumerate(sentencesMerged):
-    print(f">>>> {i}: {sent}")
-
-
 # TODO：
 # 说话内容找主人，找不到主人的就先当做旁白处理
+# 找到真正的主人需要nlp，这里只是区分说话内容和旁白
+def markSpeaker(sentences):
+    retList = []
+    for i, sent in enumerate(sentences):
+        # 如果句子被引号包裹，则认为是说话内容
+        if sent.text.startswith("“") and sent.text.endswith("”"):
+            ret = {
+                "type": "对话",
+                "content": sent.text
+            }
+        else:
+            ret = {
+                "type": "旁白",
+                "content": sent.text
+            }
+
+        retList.append(ret)
+    return retList
+
+def printSentences(sentences):
+    for i, sent in enumerate(sentences):
+        print(f">>>> {i}: {sent}")
+
+def getDemoSentences(nlp):
+    with open("spaCy/demo1.txt", "r", encoding="utf-8") as f:
+        text = f.read()
+    text = text.replace("\n", " ").strip()
+    doc = nlp(text)
+    sentences = [sent for sent in doc.sents]
+
+    return sentences
+
+def main():
+    # 加载中文模型
+    nlp = spacy.load("zh_core_web_sm")
+
+    sentences = getDemoSentences(nlp)
+
+    # 说话词汇表，不断的补充
+    speechVerbs = ["说", "道", "便道", "告诉", "问", "回答"]
+    sentencesBroken = break_sentences(nlp,sentences, speechVerbs)
+
+    sentencesMerged = merge_sentences(nlp,sentencesBroken, 5)
+
+    # printSentences(sentencesMerged)
+    retList = markSpeaker(sentencesMerged)
+
+    print(retList)
 
 
-# # 检查每个句子
-# for i, sent in enumerate(sentences):
-#     print(f">>>> {i + 1}: {sent.text}")
-#     if "“" in sent.text and "”" in sent.text:
-#         print(f"说话内容：{sent.text}")
-#         # 检查前一个句子
-#         if i > 0:
-#             for speechVerb in speechVerbs:
-#                 if speechVerb in sentences[i - 1].text:
-#                     print(f"说话动作（前）：{sentences[i - 1].text}")
-        
-#         # 检查后一个句子
-#         if i < len(sentences) - 1:
-#             for speechVerb in speechVerbs:
-#                 if speechVerb in sentences[i + 1].text:
-#                     print(f"说话动作（后）：{sentences[i + 1].text}")
+if __name__ == "__main__":
+    main()
