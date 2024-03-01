@@ -113,7 +113,12 @@ def printSentences(sentences):
         print(f">>>> {i}: {sent}")
 
 def getDemoSentences(nlp):
-    with open("spaCy/demo1.txt", "r", encoding="utf-8") as f:
+    import os
+
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(script_dir, "demo1.txt")
+
+    with open(file_path, "r", encoding="utf-8") as f:
         text = f.read()
     text = text.replace("\n", " ").strip()
     doc = nlp(text)
@@ -136,7 +141,8 @@ def main():
     # printSentences(sentencesMerged)
     retList = markSpeaker(sentencesMerged)
 
-    print(retList)
+    # print(retList)
+    return retList
 
 
 if __name__ == "__main__":
